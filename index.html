@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Update</title>
+    <style>
+        /* CSS reset and full height */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden; /* Prevent scrolling */
+            background-color: #000; /* Black background behind image */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* Image styling */
+        #prank-image {
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover; /* Cover the entire screen */
+            display: block;
+            pointer-events: none; /* Prevent dragging the image */
+            user-select: none; /* Prevent selection */
+        }
+
+        /* Cursor hiding class - applied when in fullscreen */
+        .hide-cursor {
+            cursor: none;
+        }
+
+        /* Overlay message styling */
+        #overlay-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 1.5rem;
+            pointer-events: none; /* Let clicks pass through to the body handler */
+            display: none; /* Hidden by default */
+            z-index: 10;
+            user-select: none;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- The Prank Image -->
+    <img id="prank-image" src="lockit.jpeg" alt="System Lock">
+
+    <!-- The Message Overlay -->
+    <div id="overlay-message">
+        Click anywhere to return to fullscreen
+    </div>
+
+    <script>
+        /**
+         * Main logic for the prank site.
+         * Handles fullscreen toggling, cursor visibility, and event listeners.
+         */
+        (() => {
+            // Get DOM elements
+            const imageElement = document.getElementById("prank-image");
+            const messageElement = document.getElementById("overlay-message");
+            const bodyElement = document.body;
+            const htmlElement = document.documentElement;
+
+            if (!imageElement || !messageElement || !bodyElement || !htmlElement) {
+                console.error("Critical elements not found.");
+                return;
+            }
+
+            /**
+             * Enters fullscreen mode.
+             * @returns {Promise<void>}
+             */
+            async function enterFullscreen() {
+                try {
+                    if (!document.fullscreenElement) {
+                        await htmlElement.requestFullscreen();
+                    }
+                } catch (err) {
+                    console.error("Error attempting to enable fullscreen:", err);
+                }
+            }
+
+            /**
+             * Update UI based on fullscreen state.
+             */
+            function handleFullscreenChange() {
+                if (document.fullscreenElement) {
+                    // In fullscreen: hide cursor, hide message
+                    bodyElement.classList.add("hide-cursor");
+                    messageElement.style.display = "none";
+                } else {
+                    // Exited fullscreen: show cursor, show message
+                    bodyElement.classList.remove("hide-cursor");
+                    messageElement.style.display = "block";
+                }
+            }
+
+            /**
+             * Handles global clicks.
+             * Attempts to enter fullscreen on any interaction.
+             */
+            async function handleClick() {
+                await enterFullscreen();
+            }
+
+            // Event Listeners
+
+            // 1. Click to enter fullscreen
+            document.addEventListener("click", handleClick);
+
+            // 2. Monitor fullscreen changes (Esc key, etc.)
+            document.addEventListener("fullscreenchange", handleFullscreenChange);
+            
+            // Webkit/Moz prefix support (for broader compatibility)
+            document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
+            document.addEventListener("mozfullscreenchange", handleFullscreenChange);
+            document.addEventListener("MSFullscreenChange", handleFullscreenChange);
+
+            // 3. Disable right-click context menu
+            document.addEventListener("contextmenu", (event) => {
+                event.preventDefault();
+            });
+
+            // 4. Prevent common key combos (optional, but enhances "hard to exit" feel without breaking browser security)
+            // Note: Browsers block most of these in fullscreen for security anyway, but this helps on non-fullscreen or partial states.
+            document.addEventListener("keydown", (event) => {
+                // Prevent F11 or F12 if possible (often blocked by browser)
+                if (event.key === "F11" || event.key === "F12") {
+                    event.preventDefault();
+                }
+            });
+
+            console.log("Prank script initialized.");
+        })();
+    </script>
+</body>
+</html>
+
