@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>System Update</title>
+    <title>just lock it</title>
     <style>
         /* CSS reset and full height */
         html, body {
@@ -42,11 +42,27 @@
             padding: 20px;
             border-radius: 8px;
             text-align: center;
+            font-family: 'Consolas', monospace;
             font-size: 1.5rem;
             pointer-events: none; /* Let clicks pass through to the body handler */
             display: none; /* Hidden by default */
             z-index: 10;
             user-select: none;
+        }
+
+        /* Footer styling */
+        #footer {
+            position: fixed;
+            bottom: 1rem;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-family: 'Consolas', monospace;
+            font-size: 0.75rem;
+            font-weight: 300;
+            color: rgb(255, 255, 255); 
+            z-index: 10;
+            pointer-events: none; /* Let clicks pass through */
         }
     </style>
 </head>
@@ -57,7 +73,12 @@
 
     <!-- The Message Overlay -->
     <div id="overlay-message">
-        Click anywhere to return to fullscreen
+        i hope you understand why.
+    </div>
+
+    <!-- The Footer -->
+    <div id="footer">
+        2025 ⸱ @Calixte Lamotte ⸱ harmless prank association of pranks
     </div>
 
     <script>
@@ -69,10 +90,11 @@
             // Get DOM elements
             const imageElement = document.getElementById("prank-image");
             const messageElement = document.getElementById("overlay-message");
+            const footerElement = document.getElementById("footer");
             const bodyElement = document.body;
             const htmlElement = document.documentElement;
 
-            if (!imageElement || !messageElement || !bodyElement || !htmlElement) {
+            if (!imageElement || !messageElement || !footerElement || !bodyElement || !htmlElement) {
                 console.error("Critical elements not found.");
                 return;
             }
@@ -96,13 +118,15 @@
              */
             function handleFullscreenChange() {
                 if (document.fullscreenElement) {
-                    // In fullscreen: hide cursor, hide message
+                    // In fullscreen: hide cursor, hide message, hide footer
                     bodyElement.classList.add("hide-cursor");
                     messageElement.style.display = "none";
+                    footerElement.style.display = "none";
                 } else {
-                    // Exited fullscreen: show cursor, show message
+                    // Exited fullscreen: show cursor, show message, show footer
                     bodyElement.classList.remove("hide-cursor");
                     messageElement.style.display = "block";
+                    footerElement.style.display = "block";
                 }
             }
 
