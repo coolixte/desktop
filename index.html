@@ -12,18 +12,32 @@
             width: 100%;
             height: 100%;
             overflow: hidden; /* Prevent scrolling */
-            background-color: #000; /* Black background behind image */
+            background-color: #000; 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            perspective: 1000px; /* Crucial for the 3D depth effect */
         }
 
-        /* Image styling */
-        #prank-image {
+        /* Container for the floating memes */
+        #canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100vw;
             height: 100vh;
-            object-fit: cover; /* Cover the entire screen */
-            display: block;
-            pointer-events: none; /* Prevent dragging the image */
-            user-select: none; /* Prevent selection */
+            pointer-events: none;
+            z-index: 1;
+            transform-style: preserve-3d;
+        }
+
+        /* Base styling for generated memes */
+        .floating-meme {
+            position: absolute;
+            object-fit: cover;
+            border-radius: 12px; /* Smooth Apple-style rounded corners */
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8); /* Deep shadow for 3D separation */
+            pointer-events: none; 
+            user-select: none;
+            will-change: transform, opacity; /* Performance optimization */
         }
 
         /* Cursor hiding class - applied when in fullscreen */
@@ -44,8 +58,8 @@
             text-align: center;
             font-family: 'Consolas', monospace;
             font-size: 1.5rem;
-            pointer-events: none; /* Let clicks pass through to the body handler */
-            display: none; /* Hidden by default */
+            pointer-events: none; 
+            display: none; 
             z-index: 10;
             user-select: none;
         }
@@ -62,47 +76,105 @@
             font-weight: 300;
             color: rgb(255, 255, 255); 
             z-index: 10;
-            pointer-events: none; /* Let clicks pass through */
+            pointer-events: none; 
         }
     </style>
 </head>
 <body>
 
-    <!-- The Prank Image -->
-    <img id="prank-image" src="lockit.jpeg" alt="System Lock">
+    <div id="canvas"></div>
 
-    <!-- The Message Overlay -->
     <div id="overlay-message">
         i hope you understand why.
     </div>
 
-    <!-- The Footer -->
     <div id="footer">
         2025 ⸱ @Calixte Lamotte ⸱ harmless prank association of pranks
     </div>
 
     <script>
-        /**
-         * Main logic for the prank site.
-         * Handles fullscreen toggling, cursor visibility, and event listeners.
-         */
         (() => {
-            // Get DOM elements
-            const imageElement = document.getElementById("prank-image");
+            // --- Core Prank Logic ---
             const messageElement = document.getElementById("overlay-message");
             const footerElement = document.getElementById("footer");
             const bodyElement = document.body;
             const htmlElement = document.documentElement;
+            const canvas = document.getElementById("canvas");
 
-            if (!imageElement || !messageElement || !footerElement || !bodyElement || !htmlElement) {
-                console.error("Critical elements not found.");
-                return;
-            }
+            // --- Floating Memes Data ---
+            const memes = [
+                "media/lockit.jpeg",
+                "media/lockmeme-04.png",
+                "media/lockmeme-05.png",
+                "media/lockmeme-06.png",
+                "media/lockmeme-07.png",
+                "media/lockmeme-15.png",
+                "media/lockmeme-16.png",
+                "media/lockmeme-18.png",
+                "media/lockmeme-20.png",
+                "media/lockmeme-25.png",
+                "media/lockmeme-27.png",
+                "media/lockmeme-29.png",
+                "media/lockmeme-32.png"
+            ];
 
             /**
-             * Enters fullscreen mode.
-             * @returns {Promise<void>}
+             * Generates a single floating meme and animates it across the screen.
              */
+            function spawnMeme() {
+                const img = document.createElement("img");
+                img.src = memes[Math.floor(Math.random() * memes.length)];
+                img.className = "floating-meme";
+
+                // Random dimensions (between 15vw and 40vw to mimic different photo depths)
+                const size = Math.random() * 25 + 15;
+                img.style.width = `${size}vw`;
+
+                // Starting coordinates (spread across the viewport, sometimes slightly off-screen)
+                const startX = (Math.random() * 120) - 10; // -10vw to 110vw
+                const startY = (Math.random() * 120) - 10; // -10vh to 110vh
+                const startZ = (Math.random() * 600) - 300; // Deep 3D perspective
+
+                // Calculate a slow drift end point
+                const endX = startX + (Math.random() * 30 - 15); 
+                const endY = startY + (Math.random() * 30 - 15);
+                const endZ = startZ + (Math.random() * 200 - 100);
+
+                // Slight rotations for a natural float
+                const startRot = Math.random() * 10 - 5; 
+                const endRot = startRot + (Math.random() * 10 - 5);
+
+                canvas.appendChild(img);
+
+                // Animation duration between 15 and 25 seconds
+                const duration = Math.random() * 10000 + 15000; 
+
+                // Web Animations API
+                const animation = img.animate([
+                    { transform: `translate3d(${startX}vw, ${startY}vh, ${startZ}px) rotate(${startRot}deg)`, opacity: 0 },
+                    { opacity: 0.8, offset: 0.1 }, // Fade in early
+                    { opacity: 0.8, offset: 0.9 }, // Hold opacity
+                    { transform: `translate3d(${endX}vw, ${endY}vh, ${endZ}px) rotate(${endRot}deg)`, opacity: 0 }
+                ], {
+                    duration: duration,
+                    easing: 'linear',
+                    fill: 'forwards'
+                });
+
+                // Clean up DOM to prevent lag when animation finishes
+                animation.onfinish = () => img.remove();
+            }
+
+            // Start the screensaver loop (spawns a new image every 3.5 seconds)
+            setInterval(spawnMeme, 3500);
+            
+            // Spawn initial batch so the screen isn't empty immediately
+            spawnMeme();
+            setTimeout(spawnMeme, 1000);
+            setTimeout(spawnMeme, 2000);
+
+
+            // --- Fullscreen & Security Event Listeners ---
             async function enterFullscreen() {
                 try {
                     if (!document.fullscreenElement) {
@@ -113,61 +185,36 @@
                 }
             }
 
-            /**
-             * Update UI based on fullscreen state.
-             */
             function handleFullscreenChange() {
                 if (document.fullscreenElement) {
-                    // In fullscreen: hide cursor, hide message, hide footer
                     bodyElement.classList.add("hide-cursor");
                     messageElement.style.display = "none";
                     footerElement.style.display = "none";
                 } else {
-                    // Exited fullscreen: show cursor, show message, show footer
                     bodyElement.classList.remove("hide-cursor");
                     messageElement.style.display = "block";
                     footerElement.style.display = "block";
                 }
             }
 
-            /**
-             * Handles global clicks.
-             * Attempts to enter fullscreen on any interaction.
-             */
-            async function handleClick() {
+            document.addEventListener("click", async () => {
                 await enterFullscreen();
-            }
+            });
 
-            // Event Listeners
-
-            // 1. Click to enter fullscreen
-            document.addEventListener("click", handleClick);
-
-            // 2. Monitor fullscreen changes (Esc key, etc.)
             document.addEventListener("fullscreenchange", handleFullscreenChange);
-            
-            // Webkit/Moz prefix support (for broader compatibility)
             document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
             document.addEventListener("mozfullscreenchange", handleFullscreenChange);
             document.addEventListener("MSFullscreenChange", handleFullscreenChange);
 
-            // 3. Disable right-click context menu
-            document.addEventListener("contextmenu", (event) => {
-                event.preventDefault();
-            });
+            document.addEventListener("contextmenu", (event) => event.preventDefault());
 
-            // 4. Prevent common key combos (optional, but enhances "hard to exit" feel without breaking browser security)
-            // Note: Browsers block most of these in fullscreen for security anyway, but this helps on non-fullscreen or partial states.
             document.addEventListener("keydown", (event) => {
-                // Prevent F11 or F12 if possible (often blocked by browser)
                 if (event.key === "F11" || event.key === "F12") {
                     event.preventDefault();
                 }
             });
 
-            console.log("Prank script initialized.");
         })();
     </script>
 </body>
 </html>
-
