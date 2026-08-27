@@ -5,56 +5,72 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>just lock it</title>
     <style>
-        /* CSS reset and full height */
         html, body {
             margin: 0;
             padding: 0;
             width: 100%;
             height: 100%;
-            overflow: hidden; /* Prevent scrolling */
+            overflow: hidden;
             background-color: #000; 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            perspective: 1000px; /* Crucial for the 3D depth effect */
         }
 
-        /* Container for the floating memes */
-        #canvas {
+        /* 
+         * The Camera/Scene: 
+         * Provides the deep 3D perspective so elements can tumble realistically.
+         */
+        #scene-wrapper {
             position: absolute;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
-            pointer-events: none;
+            perspective: 1500px; 
             z-index: 1;
-            transform-style: preserve-3d;
+            pointer-events: none;
         }
 
-        /* Base styling for generated memes */
+        /* 
+         * The World Container:
+         * Instead of deleting and recreating cube faces, we keep all images in one 
+         * continuous 3D volume. When this rotates by multiples of 360, the images 
+         * do a chaotic tumble but visually return perfectly to their logical paths.
+         */
+        #world {
+            position: absolute;
+            width: 100vw;
+            height: 100vh;
+            transform-style: preserve-3d;
+            transform-origin: 50% 50% -200px; /* Pivots slightly behind the screen */
+            transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+            transition: transform 4.5s cubic-bezier(0.65, 0, 0.15, 1); /* Cinematic ease in/out */
+        }
+
+        /* Floating Meme Styling */
         .floating-meme {
             position: absolute;
             object-fit: cover;
-            border-radius: 12px; /* Smooth Apple-style rounded corners */
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8); /* Deep shadow for 3D separation */
+            border-radius: 16px;
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.95), 0 0 30px rgba(0,0,0,0.6);
             pointer-events: none; 
             user-select: none;
-            will-change: transform, opacity; /* Performance optimization */
+            will-change: transform, opacity; 
         }
 
-        /* Cursor hiding class - applied when in fullscreen */
-        .hide-cursor {
-            cursor: none;
-        }
+        /* UI Overlays */
+        .hide-cursor { cursor: none; }
 
-        /* Overlay message styling */
         #overlay-message {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            color: white;
-            background-color: rgba(0, 0, 0, 0.7);
-            padding: 20px;
-            border-radius: 8px;
+            color: rgba(255, 255, 255, 0.8);
+            background-color: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 20px 40px;
+            border-radius: 12px;
             text-align: center;
             font-family: 'Consolas', monospace;
             font-size: 1.5rem;
@@ -62,9 +78,9 @@
             display: none; 
             z-index: 10;
             user-select: none;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
-        /* Footer styling */
         #footer {
             position: fixed;
             bottom: 1rem;
@@ -74,7 +90,7 @@
             font-family: 'Consolas', monospace;
             font-size: 0.75rem;
             font-weight: 300;
-            color: rgb(255, 255, 255); 
+            color: rgba(255, 255, 255, 0.5); 
             z-index: 10;
             pointer-events: none; 
         }
@@ -82,26 +98,27 @@
 </head>
 <body>
 
-    <div id="canvas"></div>
+    <!-- 3D Scene System -->
+    <div id="scene-wrapper">
+        <div id="world"></div>
+    </div>
 
+    <!-- UI Overlays -->
     <div id="overlay-message">
         i hope you understand why.
     </div>
-
     <div id="footer">
         2025 ⸱ @Calixte Lamotte ⸱ harmless prank association of pranks
     </div>
 
     <script>
         (() => {
-            // --- Core Prank Logic ---
             const messageElement = document.getElementById("overlay-message");
             const footerElement = document.getElementById("footer");
             const bodyElement = document.body;
             const htmlElement = document.documentElement;
-            const canvas = document.getElementById("canvas");
+            const world = document.getElementById("world");
 
-            // --- Floating Memes Data ---
             const memes = [
                 "media/lockit.jpeg",
                 "media/lockmeme-04.png",
@@ -118,63 +135,115 @@
                 "media/lockmeme-32.png"
             ];
 
+            // Tracks global rotation to ensure continuous 3D spins
+            let currentRotX = 0;
+            let currentRotY = 0;
+            let currentRotZ = 0;
+
+            // Column tracking to minimize horizontal overlap
+            let lastColumn = -1; 
+            const numColumns = 4;
+            const colWidth = 100 / numColumns;
+
             /**
-             * Generates a single floating meme and animates it across the screen.
+             * Generates an image that floats from bottom to top.
+             * @param {boolean} isInitial - If true, starts the animation midway through the screen.
              */
-            function spawnMeme() {
+            function spawnMeme(isInitial = false) {
                 const img = document.createElement("img");
                 img.src = memes[Math.floor(Math.random() * memes.length)];
                 img.className = "floating-meme";
 
-                // Random dimensions (between 15vw and 40vw to mimic different photo depths)
-                const size = Math.random() * 25 + 15;
+                // Size variation (slightly smaller to accommodate overlaps better)
+                const size = Math.random() * 15 + 20; // 20vw to 35vw
                 img.style.width = `${size}vw`;
 
-                // Starting coordinates (spread across the viewport, sometimes slightly off-screen)
-                const startX = (Math.random() * 120) - 10; // -10vw to 110vw
-                const startY = (Math.random() * 120) - 10; // -10vh to 110vh
-                const startZ = (Math.random() * 600) - 300; // Deep 3D perspective
+                // Assign to a distinct vertical column to avoid messy clumping
+                let col = Math.floor(Math.random() * numColumns);
+                while (col === lastColumn) {
+                    col = Math.floor(Math.random() * numColumns);
+                }
+                lastColumn = col;
 
-                // Calculate a slow drift end point
-                const endX = startX + (Math.random() * 30 - 15); 
-                const endY = startY + (Math.random() * 30 - 15);
-                const endZ = startZ + (Math.random() * 200 - 100);
+                // Center it slightly within the chosen column
+                const startX = (col * colWidth) + (Math.random() * (colWidth - 15)); 
 
-                // Slight rotations for a natural float
-                const startRot = Math.random() * 10 - 5; 
-                const endRot = startRot + (Math.random() * 10 - 5);
+                // Drift path (from deeply below screen to high above)
+                const startY = 120; 
+                const endY = -60;   
+                
+                // Deep 3D Parallax offset (so some images orbit wider when the world spins)
+                const zDepth = (Math.random() * -600) + 100; // Between 100px (close) and -500px (deep)
 
-                canvas.appendChild(img);
+                // Subtle Ken Burns zooming
+                const isZoomingIn = Math.random() > 0.5;
+                const startScale = isZoomingIn ? 0.9 : 1.1;
+                const endScale = isZoomingIn ? 1.1 : 0.9;
+                
+                world.appendChild(img);
 
-                // Animation duration between 15 and 25 seconds
-                const duration = Math.random() * 10000 + 15000; 
+                // Long cinematic duration
+                const duration = Math.random() * 10000 + 25000; // 25s to 35s
 
-                // Web Animations API
+                // If pre-populating, we use a negative delay so the image starts already halfway up the screen
+                const delay = isInitial ? -(Math.random() * duration) : 0;
+
                 const animation = img.animate([
-                    { transform: `translate3d(${startX}vw, ${startY}vh, ${startZ}px) rotate(${startRot}deg)`, opacity: 0 },
-                    { opacity: 0.8, offset: 0.1 }, // Fade in early
-                    { opacity: 0.8, offset: 0.9 }, // Hold opacity
-                    { transform: `translate3d(${endX}vw, ${endY}vh, ${endZ}px) rotate(${endRot}deg)`, opacity: 0 }
+                    { 
+                        transform: `translate3d(${startX}vw, ${startY}vh, ${zDepth}px) scale(${startScale})`, 
+                        opacity: 0 
+                    },
+                    { opacity: 0.95, offset: 0.1 },
+                    { opacity: 0.95, offset: 0.9 },
+                    { 
+                        transform: `translate3d(${startX}vw, ${endY}vh, ${zDepth}px) scale(${endScale})`, 
+                        opacity: 0 
+                    }
                 ], {
                     duration: duration,
-                    easing: 'linear',
+                    delay: delay,
+                    easing: 'linear', 
                     fill: 'forwards'
                 });
 
-                // Clean up DOM to prevent lag when animation finishes
+                // Cleanly remove from DOM *only* when it completes its journey off-screen
                 animation.onfinish = () => img.remove();
             }
 
-            // Start the screensaver loop (spawns a new image every 3.5 seconds)
-            setInterval(spawnMeme, 3500);
+            /**
+             * The 3D Tumble Transition
+             * Rotates the entire container by exact multiples of 360. 
+             * This makes all images spin wildly in 3D space, but when the 4-second CSS transition ends, 
+             * the world is completely upright again and the images smoothly resume their logical upward paths.
+             */
+            function execute3DSpin() {
+                // Double backflip + single barrel roll
+                currentRotX += 720; 
+                currentRotY += 360;
+                
+                // 50% chance to add a Z-axis spin for maximum chaos
+                if (Math.random() > 0.5) {
+                    currentRotZ += 360;
+                }
+
+                world.style.transform = `rotateX(${currentRotX}deg) rotateY(${currentRotY}deg) rotateZ(${currentRotZ}deg)`;
+            }
+
+            // --- Animation Loops ---
             
-            // Spawn initial batch so the screen isn't empty immediately
-            spawnMeme();
-            setTimeout(spawnMeme, 1000);
-            setTimeout(spawnMeme, 2000);
+            // Spawn a new image continuously every 3 seconds
+            setInterval(() => spawnMeme(false), 3000);
 
+            // Trigger the crazy 3D spin/tumble every 25 seconds
+            setInterval(execute3DSpin, 25000);
 
-            // --- Fullscreen & Security Event Listeners ---
+            // Pre-populate the screen with 6 images immediately so it isn't empty
+            for (let i = 0; i < 6; i++) {
+                spawnMeme(true);
+            }
+
+            // --- Fullscreen & Security Logic ---
+            
             async function enterFullscreen() {
                 try {
                     if (!document.fullscreenElement) {
@@ -213,7 +282,6 @@
                     event.preventDefault();
                 }
             });
-
         })();
     </script>
 </body>
