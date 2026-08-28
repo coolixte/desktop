@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>lock your desktop.</title>
+    <title>just lock it</title>
     <style>
         html, body {
             margin: 0;
@@ -13,72 +13,65 @@
             overflow: hidden;
             background-color: #000; 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            touch-action: manipulation;
         }
 
-        /* 
-         * The Camera/Scene: 
-         * Provides the deep 3D perspective so elements can tumble realistically.
-         */
         #scene-wrapper {
             position: absolute;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
-            perspective: 1500px; 
+            perspective: 1200px; 
             z-index: 1;
             pointer-events: none;
         }
 
-        /* 
-         * The World Container:
-         * Instead of deleting and recreating cube faces, we keep all images in one 
-         * continuous 3D volume. When this rotates by multiples of 360, the images 
-         * do a chaotic tumble but visually return perfectly to their logical paths.
-         */
         #world {
             position: absolute;
             width: 100vw;
             height: 100vh;
             transform-style: preserve-3d;
-            transform-origin: 50% 50% -200px; /* Pivots slightly behind the screen */
+            transform-origin: 50% 50% -150px;
             transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg);
-            transition: transform 4.5s cubic-bezier(0.65, 0, 0.15, 1); /* Cinematic ease in/out */
+            transition: transform 3.8s cubic-bezier(0.25, 1, 0.5, 1); /* Silky deceleration curve */
         }
 
-        /* Floating Meme Styling */
         .floating-meme {
             position: absolute;
             object-fit: cover;
-            border-radius: 16px;
-            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.95), 0 0 30px rgba(0,0,0,0.6);
+            border-radius: 12px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.9), 0 0 20px rgba(0, 0, 0, 0.5);
             pointer-events: none; 
             user-select: none;
             will-change: transform, opacity; 
         }
 
-        /* UI Overlays */
-        .hide-cursor { cursor: none; }
+        .hide-cursor { 
+            cursor: none; 
+        }
 
         #overlay-message {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            color: rgba(255, 255, 255, 0.8);
-            background-color: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            padding: 20px 40px;
+            color: rgba(255, 255, 255, 0.85);
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 18px 32px;
             border-radius: 12px;
             text-align: center;
             font-family: 'Consolas', monospace;
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             pointer-events: none; 
             display: none; 
             z-index: 10;
             user-select: none;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            width: max-content;
+            max-width: 80vw;
         }
 
         #footer {
@@ -93,22 +86,22 @@
             color: rgba(255, 255, 255, 0.5); 
             z-index: 10;
             pointer-events: none; 
+            padding: 0 1rem;
         }
     </style>
 </head>
 <body>
 
-    <!-- 3D Scene System -->
     <div id="scene-wrapper">
         <div id="world"></div>
     </div>
 
-    <!-- UI Overlays -->
     <div id="overlay-message">
         i hope you understand why.
     </div>
+
     <div id="footer">
-        2026 ⸱ @Calixte Lamotte ⸱ making the world a better place kinda
+        2025 ⸱ @Calixte Lamotte ⸱ harmless prank association of pranks
     </div>
 
     <script>
@@ -120,99 +113,90 @@
             const world = document.getElementById("world");
 
             const memes = [
-                "media/1.png",
-                "media/2.jpg",
-                "media/3.jpg",
-                "media/4.jpeg",
-                "media/5.jpeg",
-                "media/6.jpeg",
-                "media/7.jpeg",
-                "media/8.png",
-                "media/9.png",
-                "media/10.png",
-                "media/11.png",
-                "media/12.png",
-                "media/13.png",
-                "media/14.png",
-                "media/15.png",
-                "media/16.png",
-                "media/17.png",
-                "media/18.png",
-                "media/19.png",
-                "media/20.png",
-                "media/21.png",
-                "media/22.png",
-                "media/23.jpeg",
-                "media/24.jpg",
-                "media/25.jpg",
-                "media/26.png",
-                "media/27.png",
-                "media/28.jpg",
-                "media/29.jpg"
-                       ];
+        "media/1.png",
+        "media/2.jpg",
+        "media/3.jpg",
+        "media/4.jpeg",
+        "media/5.jpeg",
+        "media/6.jpeg",
+        "media/7.jpeg",
+        "media/8.png",
+        "media/9.png",
+        "media/10.png",
+        "media/11.png",
+        "media/12.png",
+        "media/13.png",
+        "media/14.png",
+        "media/15.png",
+        "media/16.png",
+        "media/17.png",
+        "media/18.png",
+        "media/19.png",
+        "media/20.png",
+        "media/21.png",
+        "media/22.png",
+        "media/23.jpeg",
+        "media/24.jpg",
+        "media/25.jpg",
+        "media/26.png",
+        "media/27.png",
+        "media/28.jpg",
+        "media/29.jpg"
+       ];
 
-            // Tracks global rotation to ensure continuous 3D spins
             let currentRotX = 0;
             let currentRotY = 0;
             let currentRotZ = 0;
 
-            // Column tracking to minimize horizontal overlap
-            let lastColumn = -1; 
-            const numColumns = 4;
-            const colWidth = 100 / numColumns;
+            function getScreenMetrics() {
+                const width = window.innerWidth;
+                const isMobile = width <= 600;
+                const isTablet = width > 600 && width <= 1024;
 
-            /**
-             * Generates an image that floats from bottom to top.
-             * @param {boolean} isInitial - If true, starts the animation midway through the screen.
-             */
+                return {
+                    isMobile,
+                    minWidthPx: isMobile ? 220 : (isTablet ? 260 : 320),
+                    maxWidthPx: isMobile ? 310 : (isTablet ? 360 : 450),
+                    targetConcurrent: isMobile ? 3 : (isTablet ? 5 : 7),
+                    spawnIntervalMs: isMobile ? 5500 : (isTablet ? 3800 : 2800)
+                };
+            }
+
             function spawnMeme(isInitial = false) {
+                const metrics = getScreenMetrics();
                 const img = document.createElement("img");
                 img.src = memes[Math.floor(Math.random() * memes.length)];
                 img.className = "floating-meme";
 
-                // Size variation (slightly smaller to accommodate overlaps better)
-                const size = Math.random() * 15 + 20; // 20vw to 35vw
-                img.style.width = `${size}vw`;
+                const pixelSize = Math.random() * (metrics.maxWidthPx - metrics.minWidthPx) + metrics.minWidthPx;
+                img.style.width = `${pixelSize}px`;
 
-                // Assign to a distinct vertical column to avoid messy clumping
-                let col = Math.floor(Math.random() * numColumns);
-                while (col === lastColumn) {
-                    col = Math.floor(Math.random() * numColumns);
-                }
-                lastColumn = col;
+                const vwSafeMargin = (pixelSize / window.innerWidth) * 100;
+                const maxLeftVw = Math.max(0, 100 - vwSafeMargin);
+                const startXVw = Math.random() * maxLeftVw;
 
-                // Center it slightly within the chosen column
-                const startX = (col * colWidth) + (Math.random() * (colWidth - 15)); 
+                const startY = 115;
+                const endY = -55;
+                const zDepth = (Math.random() * -300) + 50;
 
-                // Drift path (from deeply below screen to high above)
-                const startY = 120; 
-                const endY = -60;   
-                
-                // Deep 3D Parallax offset (so some images orbit wider when the world spins)
-                const zDepth = (Math.random() * -600) + 100; // Between 100px (close) and -500px (deep)
-
-                // Subtle Ken Burns zooming
                 const isZoomingIn = Math.random() > 0.5;
-                const startScale = isZoomingIn ? 0.9 : 1.1;
-                const endScale = isZoomingIn ? 1.1 : 0.9;
+                const startScale = isZoomingIn ? 0.94 : 1.06;
+                const endScale = isZoomingIn ? 1.06 : 0.94;
                 
                 world.appendChild(img);
 
-                // Long cinematic duration
-                const duration = Math.random() * 10000 + 25000; // 25s to 35s
-
-                // If pre-populating, we use a negative delay so the image starts already halfway up the screen
+                const duration = Math.random() * 8000 + 22000; 
                 const delay = isInitial ? -(Math.random() * duration) : 0;
 
                 const animation = img.animate([
                     { 
-                        transform: `translate3d(${startX}vw, ${startY}vh, ${zDepth}px) scale(${startScale})`, 
+                        transform: `translate3d(${startXVw}vw, ${startY}vh, ${zDepth}px) scale(${startScale})`, 
                         opacity: 0 
                     },
-                    { opacity: 0.95, offset: 0.1 },
-                    { opacity: 0.95, offset: 0.9 },
+                    { opacity: 0.95, offset: 0.12 },
+                    { opacity: 0.95, offset: 0.88 },
                     { 
-                        transform: `translate3d(${startX}vw, ${endY}vh, ${zDepth}px) scale(${endScale})`, 
+                        transform: `translate3d(${startXVw}vw, ${endY}vh, ${zDepth}px) scale(${endScale})`, 
                         opacity: 0 
                     }
                 ], {
@@ -222,51 +206,57 @@
                     fill: 'forwards'
                 });
 
-                // Cleanly remove from DOM *only* when it completes its journey off-screen
                 animation.onfinish = () => img.remove();
             }
 
             /**
-             * The 3D Tumble Transition
-             * Rotates the entire container by exact multiples of 360. 
-             * This makes all images spin wildly in 3D space, but when the 4-second CSS transition ends, 
-             * the world is completely upright again and the images smoothly resume their logical upward paths.
+             * FIXED 3D TUMBLE:
+             * Axes must ONLY rotate in perfect 360-degree increments.
+             * This ensures the 3D volume always lands perfectly square to the user's screen,
+             * preventing images from drifting diagonally after a spin.
              */
             function execute3DSpin() {
-                // Double backflip + single barrel roll
-                currentRotX += 720; 
-                currentRotY += 360;
-                
-                // 50% chance to add a Z-axis spin for maximum chaos
+                // Always do a full vertical flip
+                currentRotX += (Math.random() > 0.5 ? 360 : -360);
+
+                // 50% chance to also do a horizontal flip
                 if (Math.random() > 0.5) {
-                    currentRotZ += 360;
+                    currentRotY += (Math.random() > 0.5 ? 360 : -360);
                 }
 
-                world.style.transform = `rotateX(${currentRotX}deg) rotateY(${currentRotY}deg) rotateZ(${currentRotZ}deg)`;
+                // Apply the transform. Because they are exact multiples of 360,
+                // the rotation looks chaotic during the 3.8s transition but ends perfectly aligned.
+                world.style.transform = `rotateX(${currentRotX}deg) rotateY(${currentRotY}deg) rotateZ(0deg)`;
             }
 
-            // --- Animation Loops ---
-            
-            // Spawn a new image continuously every 3 seconds
-            setInterval(() => spawnMeme(false), 3000);
-
-            // Trigger the crazy 3D spin/tumble every 25 seconds
-            setInterval(execute3DSpin, 25000);
-
-            // Pre-populate the screen with 6 images immediately so it isn't empty
-            for (let i = 0; i < 6; i++) {
-                spawnMeme(true);
+            let spawnTimer = null;
+            function restartSpawner() {
+                if (spawnTimer) clearInterval(spawnTimer);
+                const metrics = getScreenMetrics();
+                spawnTimer = setInterval(() => spawnMeme(false), metrics.spawnIntervalMs);
             }
 
-            // --- Fullscreen & Security Logic ---
-            
+            function initScene() {
+                world.innerHTML = '';
+                const metrics = getScreenMetrics();
+                for (let i = 0; i < metrics.targetConcurrent; i++) {
+                    spawnMeme(true);
+                }
+                restartSpawner();
+            }
+
+            initScene();
+            window.addEventListener('resize', restartSpawner);
+
+            setInterval(execute3DSpin, 24000);
+
             async function enterFullscreen() {
                 try {
-                    if (!document.fullscreenElement) {
+                    if (!document.fullscreenElement && htmlElement.requestFullscreen) {
                         await htmlElement.requestFullscreen();
                     }
                 } catch (err) {
-                    console.error("Error attempting to enable fullscreen:", err);
+                    console.error("Fullscreen request declined:", err);
                 }
             }
 
@@ -282,21 +272,17 @@
                 }
             }
 
-            document.addEventListener("click", async () => {
-                await enterFullscreen();
-            });
+            document.addEventListener("click", enterFullscreen);
+            document.addEventListener("touchstart", enterFullscreen, { passive: true });
 
             document.addEventListener("fullscreenchange", handleFullscreenChange);
             document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
             document.addEventListener("mozfullscreenchange", handleFullscreenChange);
             document.addEventListener("MSFullscreenChange", handleFullscreenChange);
 
-            document.addEventListener("contextmenu", (event) => event.preventDefault());
-
-            document.addEventListener("keydown", (event) => {
-                if (event.key === "F11" || event.key === "F12") {
-                    event.preventDefault();
-                }
+            document.addEventListener("contextmenu", (e) => e.preventDefault());
+            document.addEventListener("keydown", (e) => {
+                if (e.key === "F11" || e.key === "F12") e.preventDefault();
             });
         })();
     </script>
